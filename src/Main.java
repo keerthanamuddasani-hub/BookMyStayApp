@@ -1,121 +1,88 @@
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-/**
- * =================================================
- * CLASS - InvalidBookingException
- * =================================================
- * Custom exception for invalid booking scenarios
+/*
+ * Class: CustomerService
+ * Use Case ID: Booking Cancellation & Inventory Rollback
+ *
+ * Description:
+ * This class is responsible for handling
+ * booking registrations and cancellations.
  */
-class InvalidBookingException extends Exception {
 
-    public InvalidBookingException(String message) {
-        super(message);
-    }
-}
+class CustomerService {
 
-/**
- * =================================================
- * CLASS - RoomInventory
- * =================================================
- * Maintains available room types
- */
-class RoomInventory {
+    // Maximum number of tickets allowed per booking
+    private static final int MAX_TICKETS = 5;
 
-    private Set<String> availableRooms;
+    // Stores bookings
+    private Map<Integer, String> reservations = new HashMap<>();
 
-    public RoomInventory() {
-        availableRooms = new HashSet<>();
-        availableRooms.add("Single");
-        availableRooms.add("Double");
-        availableRooms.add("Suite");
+    // Constructor
+    public CustomerService() {
+        System.out.println("Customer Service initialized...");
     }
 
-    public boolean isRoomAvailable(String roomType) {
-        return availableRooms.contains(roomType);
-    }
-}
+    /*
+     * Registers a customer booking
+     */
+    public void registerBooking(int reservationId, String customerName) {
 
-/**
- * =================================================
- * CLASS - ReservationValidator
- * =================================================
- * Validates booking input
- */
-class ReservationValidator {
-
-    public void validate(
-            String guestName,
-            String roomType,
-            RoomInventory inventory
-    ) throws InvalidBookingException {
-
-        if (guestName == null || guestName.trim().isEmpty()) {
-            throw new InvalidBookingException("Guest name cannot be empty.");
+        if (reservations.size() >= MAX_TICKETS) {
+            System.out.println("Maximum booking limit reached.");
+            return;
         }
 
-        if (!inventory.isRoomAvailable(roomType)) {
-            throw new InvalidBookingException("Invalid room type selected.");
+        reservations.put(reservationId, customerName);
+
+        System.out.println("Booking registered successfully for "
+                + customerName + " with reservation ID: " + reservationId);
+    }
+
+    /*
+     * Cancels a booking
+     */
+    public void cancelBooking(int reservationId) {
+
+        if (reservations.containsKey(reservationId)) {
+            reservations.remove(reservationId);
+            System.out.println("Booking cancelled successfully for reservation ID: " + reservationId);
+        } else {
+            System.out.println("Reservation not found.");
         }
     }
-}
 
-/**
- * =================================================
- * CLASS - BookingRequestQueue
- * =================================================
- * Stores booking requests
- */
-class BookingRequestQueue {
-
-    private Queue<String> requests;
-
-    public BookingRequestQueue() {
-        requests = new LinkedList<>();
-    }
-
-    public void addRequest(String guestName, String roomType) {
-        requests.add("Guest: " + guestName + ", Room Type: " + roomType);
+    /*
+     * Shutdown service
+     */
+    public void shutdownService() {
+        System.out.println("System shutting down...");
     }
 }
 
-/**
- * =================================================
- * MAIN CLASS - UseCase9ErrorHandlingValidation
- * =================================================
- * Demonstrates validation and error handling
+
+/*
+ * Class: AccessBookingCancellation
+ *
+ * Description:
+ * This class demonstrates how booking cancellation
+ * is handled in the system.
  */
-public class Main {
+
+class AccessBookingCancellation {
 
     public static void main(String[] args) {
 
-        System.out.println("Booking Validation");
+        CustomerService service = new CustomerService();
 
-        Scanner scanner = new Scanner(System.in);
+        // Register bookings
+        service.registerBooking(1001, "Rahul");
+        service.registerBooking(1002, "Ananya");
 
-        RoomInventory inventory = new RoomInventory();
-        ReservationValidator validator = new ReservationValidator();
-        BookingRequestQueue bookingQueue = new BookingRequestQueue();
+        // Cancel booking
+        service.cancelBooking(1001);
 
-        try {
-
-            System.out.print("Enter guest name: ");
-            String guestName = scanner.nextLine();
-
-            System.out.print("Enter room type (Single/Double/Suite): ");
-            String roomType = scanner.nextLine();
-
-            validator.validate(guestName, roomType, inventory);
-
-            bookingQueue.addRequest(guestName, roomType);
-
-            System.out.println("Booking request added successfully.");
-
-        } catch (InvalidBookingException e) {
-
-            System.out.println("Booking failed: " + e.getMessage());
-
-        } finally {
-            scanner.close();
-        }
+        // Shutdown system
+        service.shutdownService();
     }
 }
