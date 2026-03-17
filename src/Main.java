@@ -1,107 +1,88 @@
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-/**
- * ==================================================
- * MAIN CLASS - UseCase7AddOnServiceSelection
- * ==================================================
- *
- * Use Case 7: Add-On Service Selection
+/*
+ * Class: CustomerService
+ * Use Case ID: Booking Cancellation & Inventory Rollback
  *
  * Description:
- * This class demonstrates how optional
- * services can be attached to a confirmed
- * booking.
+ * This class is responsible for handling
+ * booking registrations and cancellations.
  */
 
-public class Main {
+class CustomerService {
+
+    // Maximum number of tickets allowed per booking
+    private static final int MAX_TICKETS = 5;
+
+    // Stores bookings
+    private Map<Integer, String> reservations = new HashMap<>();
+
+    // Constructor
+    public CustomerService() {
+        System.out.println("Customer Service initialized...");
+    }
+
+    /*
+     * Registers a customer booking
+     */
+    public void registerBooking(int reservationId, String customerName) {
+
+        if (reservations.size() >= MAX_TICKETS) {
+            System.out.println("Maximum booking limit reached.");
+            return;
+        }
+
+        reservations.put(reservationId, customerName);
+
+        System.out.println("Booking registered successfully for "
+                + customerName + " with reservation ID: " + reservationId);
+    }
+
+    /*
+     * Cancels a booking
+     */
+    public void cancelBooking(int reservationId) {
+
+        if (reservations.containsKey(reservationId)) {
+            reservations.remove(reservationId);
+            System.out.println("Booking cancelled successfully for reservation ID: " + reservationId);
+        } else {
+            System.out.println("Reservation not found.");
+        }
+    }
+
+    /*
+     * Shutdown service
+     */
+    public void shutdownService() {
+        System.out.println("System shutting down...");
+    }
+}
+
+
+/*
+ * Class: AccessBookingCancellation
+ *
+ * Description:
+ * This class demonstrates how booking cancellation
+ * is handled in the system.
+ */
+
+class AccessBookingCancellation {
 
     public static void main(String[] args) {
 
-        AddonServiceManager manager = new AddonServiceManager();
+        CustomerService service = new CustomerService();
 
-        String reservationId = "Single-1";
+        // Register bookings
+        service.registerBooking(1001, "Rahul");
+        service.registerBooking(1002, "Ananya");
 
-        AddonService breakfast = new AddonService("Breakfast", 50.0);
-        AddonService spa = new AddonService("Spa", 100.0);
+        // Cancel booking
+        service.cancelBooking(1001);
 
-        manager.addService(reservationId, breakfast);
-        manager.addService(reservationId, spa);
-
-        double totalCost = manager.calculateTotalServiceCost(reservationId);
-
-        System.out.println("Add-On Service Selection");
-        System.out.println("Reservation ID: " + reservationId);
-        System.out.println("Total Add-On Cost: " + totalCost);
-    }
-}
-
-
-/**
- * ==================================================
- * CLASS - AddonService
- * ==================================================
- *
- * Represents an optional service
- * that can be added to a reservation.
- */
-
-class AddonService {
-
-    private String serviceName;
-    private double cost;
-
-    public AddonService(String serviceName, double cost) {
-        this.serviceName = serviceName;
-        this.cost = cost;
-    }
-
-    public String getServiceName() {
-        return serviceName;
-    }
-
-    public double getCost() {
-        return cost;
-    }
-}
-
-
-/**
- * ==================================================
- * CLASS - AddonServiceManager
- * ==================================================
- *
- * Manages optional services for reservations
- */
-
-class AddonServiceManager {
-
-    private Map<String, List<AddonService>> servicesByReservation;
-
-    public AddonServiceManager() {
-        servicesByReservation = new HashMap<>();
-    }
-
-    public void addService(String reservationId, AddonService service) {
-
-        if (!servicesByReservation.containsKey(reservationId)) {
-            servicesByReservation.put(reservationId, new ArrayList<>());
-        }
-
-        servicesByReservation.get(reservationId).add(service);
-    }
-
-    public double calculateTotalServiceCost(String reservationId) {
-
-        double total = 0;
-
-        List<AddonService> services = servicesByReservation.get(reservationId);
-
-        if (services != null) {
-            for (AddonService service : services) {
-                total += service.getCost();
-            }
-        }
-
-        return total;
+        // Shutdown system
+        service.shutdownService();
     }
 }
