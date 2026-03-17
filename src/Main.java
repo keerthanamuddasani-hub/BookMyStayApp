@@ -1,88 +1,135 @@
-import java.util.HashMap;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
 /*
- * Class: CustomerService
- * Use Case ID: Booking Cancellation & Inventory Rollback
- *
- * Description:
- * This class is responsible for handling
- * booking registrations and cancellations.
- */
+ ======================================================
+ CLASS - RoomInventory
+ ======================================================
+ Stores available room counts
+*/
+class RoomInventory {
 
-class CustomerService {
+    private Map<String, Integer> inventory;
 
-    // Maximum number of tickets allowed per booking
-    private static final int MAX_TICKETS = 5;
-
-    // Stores bookings
-    private Map<Integer, String> reservations = new HashMap<>();
-
-    // Constructor
-    public CustomerService() {
-        System.out.println("Customer Service initialized...");
+    public RoomInventory() {
+        inventory = new HashMap<>();
     }
 
-    /*
-     * Registers a customer booking
-     */
-    public void registerBooking(int reservationId, String customerName) {
-
-        if (reservations.size() >= MAX_TICKETS) {
-            System.out.println("Maximum booking limit reached.");
-            return;
-        }
-
-        reservations.put(reservationId, customerName);
-
-        System.out.println("Booking registered successfully for "
-                + customerName + " with reservation ID: " + reservationId);
+    public void setRoomCount(String roomType, int count) {
+        inventory.put(roomType, count);
     }
 
-    /*
-     * Cancels a booking
-     */
-    public void cancelBooking(int reservationId) {
-
-        if (reservations.containsKey(reservationId)) {
-            reservations.remove(reservationId);
-            System.out.println("Booking cancelled successfully for reservation ID: " + reservationId);
-        } else {
-            System.out.println("Reservation not found.");
-        }
+    public int getRoomCount(String roomType) {
+        return inventory.getOrDefault(roomType, 0);
     }
 
-    /*
-     * Shutdown service
-     */
-    public void shutdownService() {
-        System.out.println("System shutting down...");
+    public Map<String, Integer> getAllRooms() {
+        return inventory;
     }
 }
 
+/*
+ ======================================================
+ CLASS - FilePersistenceService
+ ======================================================
+ Saves and loads inventory data from file
+*/
+class FilePersistenceService {
+
+    /*
+     Saves inventory state to file
+     Format: roomType=availableCount
+    */
+    public void saveInventory(RoomInventory inventory, String filePath) {
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
+
+            for (Map.Entry<String, Integer> entry :
+                    inventory.getAllRooms().entrySet()) {
+
+                writer.println(entry.getKey() + "=" + entry.getValue());
+            }
+
+            System.out.println("Inventory saved successfully.");
+
+        } catch (IOException e) {
+            System.out.println("Error saving inventory: " + e.getMessage());
+        }
+    }
+
+    /*
+     Loads inventory state from file
+    */
+    public void loadInventory(RoomInventory inventory, String filePath) {
+
+        File file = new File(filePath);
+
+        if (!file.exists()) {
+            System.out.println("No valid inventory data found. Starting fresh.");
+            return;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+
+                String[] parts = line.split("=");
+
+                if (parts.length == 2) {
+
+                    String roomType = parts[0];
+                    int count = Integer.parseInt(parts[1]);
+
+                    inventory.setRoomCount(roomType, count);
+                }
+            }
+
+        } catch (IOException e) {
+            System.out.println("Error loading inventory: " + e.getMessage());
+        }
+    }
+}
 
 /*
- * Class: AccessBookingCancellation
- *
- * Description:
- * This class demonstrates how booking cancellation
- * is handled in the system.
- */
-
-class AccessBookingCancellation {
+ ======================================================
+ MAIN CLASS - UseCase12DataPersistenceRecovery
+ ======================================================
+ Demonstrates system recovery using file persistence
+*/
+public class Main {
 
     public static void main(String[] args) {
 
-        CustomerService service = new CustomerService();
+        System.out.println("System Recovery");
 
-        // Register bookings
-        service.registerBooking(1001, "Rahul");
-        service.registerBooking(1002, "Ananya");
+        RoomInventory inventory = new RoomInventory();
+        FilePersistenceService persistence =
+                new FilePersistenceService();
 
-        // Cancel booking
-        service.cancelBooking(1001);
+        String filePath = "inventory.txt";
 
-        // Shutdown system
-        service.shutdownService();
+        // Load existing inventory
+        persistence.loadInventory(inventory, filePath);
+
+        // If inventory empty, initialize default values
+        if (inventory.getAllRooms().isEmpty()) {
+
+            inventory.setRoomCount("Single", 5);
+            inventory.setRoomCount("Double", 3);
+            inventory.setRoomCount("Suite", 2);
+        }
+
+        System.out.println("\nCurrent Inventory:");
+
+        for (Map.Entry<String, Integer> entry :
+                inventory.getAllRooms().entrySet()) {
+
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+
+        // Save inventory
+        persistence.saveInventory(inventory, filePath);
     }
 }
